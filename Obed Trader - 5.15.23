@@ -33,6 +33,7 @@ double PHistoPos;
 double PHistoNeg;
 
 double kauf;
+double chopUb;
 
   // Loop through open trades
 void checkTrade() {
@@ -334,10 +335,16 @@ RSI = iCustom(sortedPairs[i], 0, "OTC\\RSI", 11, 0, 1);
 // Returns a value if not active, returns 1 if same direction
 PHistoPos = iCustom(sortedPairs[i], 0, "OTC\\precision_trend_histo_2", 50, 2.2, 0,1);
 PHistoNeg = iCustom(sortedPairs[i], 0, "OTC\\precision_trend_histo_2", 50, 2.2, 1,1);
-
 //KAUFMAN BASELINE
 // returns 1 for bull market and -1 for bear market
 kauf = iCustom(sortedPairs[i],0, "OTC\\kaufman_ama_averages_filtered_ATR bands", "current", 10, "Weighted price", 2, 10, 2.0, 22, "exponential moving average - EMA", 3, 1);
+//Choppiness Index
+chopUb = iCustom(sortedPairs[i],0,"OTC\\choppiness index m4", 26, 45, 45, 2, 1, 1);
+
+
+
+
+
 
 
    
