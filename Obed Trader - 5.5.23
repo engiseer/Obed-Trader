@@ -11,7 +11,7 @@
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 static datetime CandleOpenTime;
-string symbolPairs[] = {"AUDCAD", "AUDCHF", "AUDJPY", "AUDNZD", "AUDUSD", "CADCHF", "CADJPY", "CHFJPY", "EURAUD", "EURCAD", "EURCHF", "EURGBP", "EURJPY", "EURNZD", "EURUSD", "GBPAUD", "GBPCAD", "GBPCHF", "GBPJPY", "GBPNZD", "GBPUSD", "NZDCAD", "NZDCHF", "NZDJPY", "NZDUSD", "USDCAD", "USDCHF", "USDJPY", "XAUUSD", "XAUEUR"};
+string symbolPairs[] = {"AUDCAD", "AUDCHF", "AUDJPY", "AUDNZD", "AUDUSD", "CADCHF", "CADJPY", "CHFJPY", "EURAUD", "EURCAD", "EURCHF", "EURGBP", "EURJPY", "EURNZD", "EURUSD", "GBPAUD", "GBPCAD", "GBPCHF", "GBPJPY", "GBPNZD", "GBPUSD", "NZDCAD", "NZDCHF", "NZDJPY", "NZDUSD", "USDCAD", "USDCHF", "USDJPY", "XAUUSD", "XAUEUR", "USOIL", "USA100", "USA500", "USA30"};
 string sortedPairs[];
 string openSymbols[];
 string newSignals[];
@@ -34,27 +34,6 @@ double PHistoNeg;
 
 double kauf;
 
-// Encapsulate the functionality of modifying and closing trade in a separate function
-bool modifyAndCloseTrade(int ticket, double newEntryPrice, double newStopLoss, double bid, double ask, double lotSize) {
-    bool modifyResult = OrderModify(ticket, newEntryPrice, newStopLoss, 0, 0, CLR_NONE);
-    if (modifyResult) {
-        Print("Trade Modified Successfully");
-
-        Sleep(1000); // Wait for 1 second
-
-        bool closeResult = OrderClose(ticket, lotSize, OrderType() == OP_BUY ? bid : ask, 0, CLR_NONE);
-        if (closeResult) {
-            Print("Trade Won, Half Profit Taken");
-            return true;
-        } else {
-            Print("Error closing trade: ", GetLastError());
-        }
-    } else {
-        Print("Error modifying trade: ", GetLastError());
-    }
-    return false;
-}
-
   // Loop through open trades
 void checkTrade() {
 
@@ -73,7 +52,7 @@ for (int i = OrdersTotal() - 1; i >= 0; i--) {
         
 
 if (symbolIndex != -1) {
-    RefreshRates(); // Get the latest bid and ask prices
+  //  RefreshRates(); // Get the latest bid and ask prices
 
     double TakeProfit = OrderTakeProfit();
     double ask = SymbolInfoDouble(currentSymbol, SYMBOL_ASK);
@@ -82,7 +61,7 @@ if (symbolIndex != -1) {
     double originalEntryPrice = OrderOpenPrice();
     double newEntryPrice = OrderType() == OP_BUY ? bid : ask;
     double newStopLoss = originalEntryPrice;
-    double buffer = 15 * point;
+    double buffer = 15 * point; // Adjust this value as needed
 
     if (((OrderType() == OP_BUY) && (newEntryPrice >= TakeProfit - buffer) && (newEntryPrice <= TakeProfit + buffer) && (TakeProfit != 0)) ||
         ((OrderType() == OP_SELL) && (newEntryPrice <= TakeProfit + buffer) && (newEntryPrice >= TakeProfit - buffer) && (TakeProfit != 0))) {
@@ -90,14 +69,28 @@ if (symbolIndex != -1) {
         int ticket = OrderTicket();
         double lotSize = OrderLots() / 2;
 
-        if (modifyAndCloseTrade(ticket, newEntryPrice, newStopLoss, bid, ask, lotSize)) {
-            // Remove symbol from openSymbols and add to wonTrades
-            for (int j = symbolIndex; j < ArraySize(openSymbols) - 1; j++) {
-                openSymbols[j] = openSymbols[j + 1];
+        bool modifyResult = OrderModify(ticket, newEntryPrice, newStopLoss, 0, 0, CLR_NONE);
+        if (modifyResult) {
+            Print("Trade Modified Successfully");
+
+     //       Sleep(250); // Wait for 1 second
+
+            bool closeResult = OrderClose(ticket, lotSize, OrderType() == OP_BUY ? bid : ask, 0, CLR_NONE);
+            if (closeResult) {
+                Print("Trade Won, Half Profit Taken");
+
+                // Remove symbol from openSymbols and add to wonTrades
+                for (int j = symbolIndex; j < ArraySize(openSymbols) - 1; j++) {
+                    openSymbols[j] = openSymbols[j + 1];
+                }
+                ArrayResize(openSymbols, ArraySize(openSymbols) - 1);
+                ArrayResize(wonTrades, ArraySize(wonTrades) + 1);
+                wonTrades[ArraySize(wonTrades) - 1] = currentSymbol;
+            } else {
+                Print("Error closing trade: ", GetLastError());
             }
-            ArrayResize(openSymbols, ArraySize(openSymbols) - 1);
-            ArrayResize(wonTrades, ArraySize(wonTrades) + 1);
-            wonTrades[ArraySize(wonTrades) - 1] = currentSymbol;
+        } else {
+            Print("Error modifying trade: ", GetLastError());
         }
     }
 }
@@ -198,40 +191,6 @@ for (int i = 0; i < ArraySize(wonTrades); i++) {
 }
 
 }
-// not active but can be active by adjusting TSI cross code to not cross on orders with no take profit
-void checkWin(){
-// Loop through symbols in wonTrades array
-for (int i = 0; i < ArraySize(wonTrades); i++) {
-    string symbol = wonTrades[i];
-    
-    // Loop through open trades for the symbol
-    for (int j = OrdersTotal() - 1; j >= 0; j--) {
-        if (OrderSelect(j, SELECT_BY_POS, MODE_TRADES) &&
-            OrderSymbol() == symbol &&
-            (OrderType() == OP_BUY || OrderType() == OP_SELL)) {
-            
-                TsiBlue = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-                TsiRed = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-            
-            
-            // Check custom indicator
-            if (((OrderType() == OP_BUY) && (TsiBlue < 0)) || ((OrderType() == OP_SELL) && (TsiBlue > 0))) {
-                
-                // Close trade
-                bool closeResult = OrderClose(OrderTicket(), OrderLots(), OrderType() == OP_BUY ? OrderOpenPrice() : OrderOpenPrice(), 0, CLR_NONE);
-                Print("Trade Won, Closed Full");
-               
-                // Remove symbol from wonTrades
-                for (int k = i; k < ArraySize(wonTrades) - 1; k++) {
-                    wonTrades[k] = wonTrades[k + 1];
-                }
-                ArrayResize(wonTrades, ArraySize(wonTrades) - 1);
-            }
-        }
-    }
-}
-}
-
 
 
 int OnInit()
@@ -270,8 +229,6 @@ void OnTick()
    {
    
    ArrayResize(sortedPairs, 0);
-   //ArrayResize(absValues, 0);
-   //ArrayResize(existingPair, 0);
    
    
 // Loop through each symbol pair and calculate the `MathAbs(50 - rsi)` value
@@ -356,7 +313,7 @@ for(int i = 0; i < ArraySize(symbolPairs); i++) {
 ArrayResize(newSignals, 0); 
    
    
- for(int i = 0; i < ArraySize(sortedPairs); i++){
+for(int i = 0; i < ArraySize(sortedPairs); i++){
 
 
 // DECLARE INDICATOR VALUES NEEDED
@@ -367,10 +324,10 @@ VertexNeg = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,2,1);
 VertexPosPrev = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,1,2); 
 VertexNegPrev = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,2,2);
 //TSIMACD
-TsiBlue = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-TsiRed = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-TsiBluePrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-TsiRedPrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+TsiBlue = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+TsiRed = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+TsiBluePrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+TsiRedPrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
 //RSI
 RSI = iCustom(sortedPairs[i], 0, "OTC\\RSI", 11, 0, 1);
 //PRECISION TREND HISTOGRAM
@@ -384,10 +341,10 @@ kauf = iCustom(sortedPairs[i],0, "OTC\\kaufman_ama_averages_filtered_ATR bands",
 
 
    
- if (((VertexPosPrev < .125) && (VertexPos > .125) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed)) || //buy  entry conditions
-    ((VertexNegPrev < .125) && (VertexNeg > .125) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue))|| //sell entry conditions
-    ((VertexPos > .125) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (TsiBluePrev < TsiRedPrev))|| //buy continuation conditions
-    ((VertexNeg > .125) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (TsiRedPrev < TsiBluePrev)))// sell continuation conditions
+ if (((VertexPosPrev < .20) && (VertexPos > .20) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed)) || //buy  entry conditions
+    ((VertexNegPrev < .20) && (VertexNeg > .20) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue))|| //sell entry conditions
+    ((VertexPos > .20) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (TsiBluePrev < TsiRedPrev))|| //buy continuation conditions
+    ((VertexNeg > .20) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (TsiRedPrev < TsiBluePrev)))// sell continuation conditions
 {
 
 
@@ -410,7 +367,7 @@ for(int i = 0; i < ArraySize(newSignals); i++) {
     double atr = iATR(newSignals[i], 0, 14,1);
 
     // Calculate the risk amount for this symbol
-    double riskAmt = AccountBalance() * 0.005;
+    double riskAmt = AccountBalance() * 0.01;
 
     // Calculate the position size for this symbol based on the risk amount and stop loss distance
     //double stopLevel = MarketInfo(newSignals[i], MODE_STOPLEVEL);
@@ -522,10 +479,10 @@ for (int i = 0; i < OrdersTotal(); i++) {
 for(int i = 0; i < ArraySize(openSymbols); i++) { //exit loop begin
 
     if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
-    TsiBlue = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-    TsiRed = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-    TsiBluePrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-    TsiRedPrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+    TsiBlue = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+    TsiRed = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+    TsiBluePrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+    TsiRedPrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
     double takeProfit = OrderTakeProfit();
     double ask1 = SymbolInfoDouble(openSymbols[i], SYMBOL_ASK);
     double bid1 = SymbolInfoDouble(openSymbols[i], SYMBOL_BID);    
@@ -554,10 +511,10 @@ for(int i = 0; i < ArraySize(openSymbols); i++) { //exit loop begin
 
 for(int i = 0; i < ArraySize(wonTrades); i++) { //exit loop begin
 if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
-TsiBlue = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-TsiRed = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-TsiBluePrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-TsiRedPrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+TsiBlue = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+TsiRed = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+TsiBluePrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+TsiRedPrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
 double takeProfit = OrderTakeProfit();
 double ask2 = SymbolInfoDouble(wonTrades[i], SYMBOL_ASK);
 double bid2 = SymbolInfoDouble(wonTrades[i], SYMBOL_BID);    
@@ -593,29 +550,9 @@ for(int i = 0; i < ArraySize(wonTrades); i++) {
     Print(wonTrades[i]);
 }
 
-
-
-checkWin();
-
 }//candle time end
-
 
 checkTrade();
 
-
-
-
-
-
-} //tick end
-
-
-
-   
-   
-   
-
-
-   
-  
+} //tick end  
 //+------------------------------------------------------------------+
