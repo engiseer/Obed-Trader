@@ -325,10 +325,10 @@ VertexNeg = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,2,1);
 VertexPosPrev = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,1,2); 
 VertexNegPrev = iCustom(sortedPairs[i], 0, "OTC\\Vertex", 12, 57, .1,2,2);
 //TSIMACD
-TsiBlue = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-TsiRed = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-TsiBluePrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-TsiRedPrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+TsiBlue = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+TsiRed = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+TsiBluePrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+TsiRedPrev = iCustom(sortedPairs[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
 //RSI
 RSI = iCustom(sortedPairs[i], 0, "OTC\\RSI", 11, 0, 1);
 //PRECISION TREND HISTOGRAM
@@ -348,10 +348,10 @@ chopUb = iCustom(sortedPairs[i],0,"OTC\\choppiness index m4", 26, 45, 45, 2, 1, 
 
 
    
- if (((VertexPosPrev < .20) && (VertexPos > .20) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (chopUb < 45.0))|| //buy  entry conditions
-    ((VertexNegPrev < .20) && (VertexNeg > .20) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (chopUb < 45.0))|| //sell entry conditions
-    ((VertexPos > .20) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (TsiBluePrev < TsiRedPrev) && (chopUb < 45.0))|| //buy continuation conditions
-    ((VertexNeg > .20) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (TsiRedPrev < TsiBluePrev) && (chopUb < 45.0)))// sell continuation conditions
+ if (((VertexPosPrev < .13) && (VertexPos > .13) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (chopUb < 50))|| //buy  entry conditions
+    ((VertexNegPrev < .13) && (VertexNeg > .13) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (chopUb < 50))|| //sell entry conditions
+    ((VertexPos > .13) && (PHistoPos == 1) && (RSI > 67) && (kauf == 1) && (TsiBlue > TsiRed) && (TsiBluePrev < TsiRedPrev) && (chopUb < 50))|| //buy continuation conditions
+    ((VertexNeg > .13) && (PHistoNeg == 1) && (RSI < 33) && (kauf == -1) && (TsiRed > TsiBlue) && (TsiRedPrev < TsiBluePrev) && (chopUb < 50)))// sell continuation conditions
 {
 
 
@@ -486,10 +486,10 @@ for (int i = 0; i < OrdersTotal(); i++) {
 for(int i = 0; i < ArraySize(openSymbols); i++) { //exit loop begin
 
     if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
-    TsiBlue = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-    TsiRed = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-    TsiBluePrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-    TsiRedPrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+    TsiBlue = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+    TsiRed = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+    TsiBluePrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+    TsiRedPrev = iCustom(openSymbols[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
     double takeProfit = OrderTakeProfit();
     double ask1 = SymbolInfoDouble(openSymbols[i], SYMBOL_ASK);
     double bid1 = SymbolInfoDouble(openSymbols[i], SYMBOL_BID);    
@@ -518,10 +518,10 @@ for(int i = 0; i < ArraySize(openSymbols); i++) { //exit loop begin
 
 for(int i = 0; i < ArraySize(wonTrades); i++) { //exit loop begin
 if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
-TsiBlue = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,1);
-TsiRed = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,1);
-TsiBluePrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,0,2);
-TsiRedPrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 10, 4, 10, 10, 5, 3,1,2);
+TsiBlue = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,1);
+TsiRed = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,1);
+TsiBluePrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,0,2);
+TsiRedPrev = iCustom(wonTrades[i], 0, "OTC\\TSI_MACD nrp alerts", 3, 8, 5, 8, 10, 3, 3,1,2);
 double takeProfit = OrderTakeProfit();
 double ask2 = SymbolInfoDouble(wonTrades[i], SYMBOL_ASK);
 double bid2 = SymbolInfoDouble(wonTrades[i], SYMBOL_BID);    
